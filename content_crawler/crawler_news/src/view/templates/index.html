@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>News Display</title>
+</head>
+
+<body>
+    
+    <form id="updateDataForm">
+         <!-- // nhập id là chỉnh sửa kh nhập là thêm mới   -->
+        <label for="id">ID:</label><br> 
+
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title"><br>
+
+        <label for="image">Image URL:</label><br>
+        <input type="text" id="image" name="image"><br>
+
+        <label for="link">Link:</label><br>
+        <input type="text" id="link" name="link"><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"></textarea><br><br>
+        <button type="button" onclick="addData()">Add Data</button>
+        <button type="button" onclick="updateData()">Update Data</button>
+    </form>
+
+    <div id="searchResults"></div>
+    <input type="text" id="searchInput" placeholder="Nhập tiêu đề...">
+    <button onclick="performSearch()">Tìm kiếm</button>
+
+    <div id="newsData"></div>
+    <button onclick="getAllNews()">Get All News</button>
+    <script>
+        // DISPLAY ALL
+        function getAllNews() {
+            fetch('/get_genk')
+                .then(response => response.json())
+                .then(data => displayNews(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        function displayNews(data) {
+            const newsData = document.getElementById('newsData');
+            newsData.innerHTML = ''; // Clear previous data
+
+            if (data && data.length > 0) {
+                data.forEach(news => {
+                    const newsElement = document.createElement('div');
+                    newsElement.innerHTML = `
+                        <h3>${news.title}</h3>
+                        <h4>${news.description}</h4>
+                        <img src="${news.image}" alt="${news.title}" style="max-width: 300px;">
+                        <p><a href="${news.link}" target="_blank">Read more</a></p>
+                    `;
+                    newsData.appendChild(newsElement);
+                });
+            } else {
+                newsData.innerHTML = 'No news available.';
+            }
+        }
+        
+        // ADD
+        function addData() {
+            const formData = {
+                title: document.getElementById('title').value,
+                image: document.getElementById('image').value,
+                link: document.getElementById('link').value,
+                description: document.getElementById('description').value
+            };
+
+            fetch('/add_genk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response from server:', data);
+                    alert('Data added successfully');
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to add data');
+                });
+        }
+
+        // SEARCH
+
+        function searchNewsByTitle(query) {
+            fetch(`/search_genk?query=${query}`)
+                .then(response => response.json())
+                .then(data => displayNews(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Ví dụ: Sử dụng hàm searchNewsByTitle khi nhấn nút tìm kiếm
+        function performSearch() {
+            const searchQuery = document.getElementById('searchInput').value;
+            searchNewsByTitle(searchQuery);
+        }
+
+
+        // UPDATE
+        function updateData() {
+            const id = document.getElementById('id').value;
+            const updatedData = {
+                title: document.getElementById('title').value,
+                image: document.getElementById('image').value,
+                link: document.getElementById('link').value,
+                description: document.getElementById('description').value
+            };
+
+            fetch(`/update_genk/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Response from server:', data);
+                    alert('Data updated successfully');
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to update data');
+                });
+        }
+
+        // DELETE
+        function deleteData(id) {
+            fetch(`/delete_genk/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Response from server:', data);
+                    alert('Data deleted successfully');
+                    // Perform any necessary actions after successful deletion, e.g., refresh data
+                    // reloadData();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to delete data');
+                });
+        }
+
+    </script>
+</body>
+
+</html>
+
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>News Display</title>
+</head>
+
+<body>
+    <h1>News Display</h1>
+    <button onclick="getAllNews()">Get All News</button>
+  <h1>Delete Data</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Image</th>
+                <th>Link</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody id="dataRows">
+        </tbody>
+    </table>
+
+     //add and update
+    <form id="updateDataForm">
+        <label for="id">ID:</label><br>
+        <input type="text" id="id" name="id"><br>
+
+        <label for="title">Title:</label><br>
+        <input type="text" id="title" name="title"><br>
+
+        <label for="image">Image URL:</label><br>
+        <input type="text" id="image" name="image"><br>
+
+        <label for="link">Link:</label><br>
+        <input type="text" id="link" name="link"><br>
+
+        <label for="description">Description:</label><br>
+        <textarea id="description" name="description"></textarea><br><br>
+        <button type="button" onclick="addData()">Add Data</button>
+        <button type="button" onclick="updateData()">Update Data</button>
+    </form>
+
+    <input type="text" id="searchInput" placeholder="Nhập tiêu đề...">
+    <button onclick="performSearch()">Tìm kiếm</button>
+
+
+    <div id="newsData"></div>
+
+    <script>
+        // DISPLAY ALL
+        let operationType = ''; // Biến để xác định thao tác thực hiện là thêm dữ liệu hay cập nhật dữ liệu
+        function getAllNews() {
+            fetch('/get_genk')
+                .then(response => response.json())
+                .then(data => displayNews(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+         function displayNews(data) {
+            const newsData = document.getElementById('newsData');
+            newsData.innerHTML = ''; // Clear previous data
+
+            if (data && data.length > 0) {
+                data.forEach(news => {
+                    const newsElement = document.createElement('div');
+                    newsElement.innerHTML = `
+                        <h3>${news.title}</h3>
+                        <h4>${news.description}</h4>
+                        <img src="${news.image}" alt="${news.title}" style="max-width: 300px;">
+                        <p><a href="${news.link}" target="_blank">Read more</a></p>
+                    `;
+                    newsData.appendChild(newsElement);
+                });
+            } else {
+                newsData.innerHTML = 'No news available.';
+            }
+        } 
+        
+        function displayNews(data) {
+            const newsData = document.getElementById('newsData');
+            newsData.innerHTML = ''; // Clear previous data
+        
+            if (data && data.length > 0) {
+                data.forEach(news => {
+                    const newsElement = document.createElement('div');
+                    newsElement.innerHTML = `
+                        <h3>${news.title}</h3>
+                        <h4>${news.description}</h4>
+                        <img src="${news.image}" alt="${news.title}" style="max-width: 300px;">
+                        <p><a href="${news.link}" target="_blank">Read more</a></p>
+                    `;
+                    newsData.appendChild(newsElement);
+                });
+            } else {
+                newsData.innerHTML = 'No news available.';
+            }
+        }
+
+        // ADD
+        function addData() {
+            operationType = 'add';
+            const formData = {
+                title: document.getElementById('title').value,
+                image: document.getElementById('image').value,
+                link: document.getElementById('link').value,
+                description: document.getElementById('description').value
+            };
+
+            fetch('/add_genk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Response from server:', data);
+                    alert('Data added successfully');
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to add data');
+                });
+        }
+
+        // SEARCH
+        function searchNewsByTitle(query) {
+            fetch(`/search_genk?query=${query}`)
+                .then(response => response.json())
+                .then(data => displayNews(data))
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Ví dụ: Sử dụng hàm searchNewsByTitle khi nhấn nút tìm kiếm
+        function performSearch() {
+            const searchQuery = document.getElementById('searchInput').value;
+            searchNewsByTitle(searchQuery);
+        }
+
+        //UPDATE
+        function updateData() {
+            operationType = 'update'; // Đặt giá trị của biến operationType là 'update' khi thực hiện cập nhật dữ liệu
+            const id = document.getElementById('id').value;
+            const updatedData = {
+                title: document.getElementById('title').value,
+                image: document.getElementById('image').value,
+                link: document.getElementById('link').value,
+                description: document.getElementById('description').value
+            };
+
+            fetch(`/update_genk/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(updatedData),
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Response from server:', data);
+                    // Xử lý khi cập nhật thành công, ví dụ: hiển thị thông báo
+                    alert('Data updated successfully');
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    // Xử lý khi có lỗi xảy ra, ví dụ: hiển thị thông báo lỗi
+                    alert('Failed to update data');
+                });
+        }
+
+
+        // function updateData() {
+        //     const id = document.getElementById('id').value;
+        //     const updatedData = {
+        //         title: document.getElementById('title').value,
+        //         image: document.getElementById('image').value,
+        //         link: document.getElementById('link').value,
+        //         description: document.getElementById('description').value
+        //     };
+
+        // Kiểm tra ID đã tồn tại trong cơ sở dữ liệu hay chưa
+        fetch(`/get_genk_by_id/${id}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('ID does not exist in the database.');
+                }
+                // Nếu ID tồn tại, tiến hành cập nhật dữ liệu
+                fetch(`/update_genk/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(updatedData),
+                })
+                    .then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        }
+                        throw new Error('Network response was not ok.');
+                    })
+                    .then(data => {
+                        console.log('Response from server:', data);
+                        alert('Data updated successfully');
+                    })
+                    .catch(error => {
+                        console.error('There was a problem with the fetch operation:', error);
+                        alert('Failed to update data');
+                    });
+            })
+            .catch(error => {
+                console.error('There was a problem with the fetch operation:', error);
+                alert('ID does not exist in the database');
+            });
+
+        // giải quyết xung đột add và update
+        function handleResponse(response) {
+            switch (operationType) {
+                case 'add':
+                    console.log('Response from server:', response);
+                    alert('Data added successfully');
+                    break;
+                case 'update':
+                    console.log('Response from server:', response);
+                    alert('Data updated successfully');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // DELETE
+        function deleteData(id) {
+            fetch(`/delete_genk/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(data => {
+                    console.log('Response from server:', data);
+                    alert('Data deleted successfully');
+                    // Perform any necessary actions after successful deletion, e.g., refresh data
+                    // reloadData();
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                    alert('Failed to delete data');
+                    // Handle errors, e.g., display error message
+                });
+        }
+
+        // Populate table with data from backend
+        // Example:
+        const dataRows = document.getElementById('dataRows');
+        fetch('/get_genk')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${row.id}</td>
+                        <td>${row.title}</td>
+                        <td>${row.image}</td>
+                        <td>${row.link}</td>
+                        <td>${row.description}</td>
+                        <td><button onclick="deleteData(${row.id})">Delete</button></td>
+                    `;
+                    dataRows.appendChild(tr);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+
+    </script>
+</body>
+
+</html>  -->
